@@ -165,7 +165,7 @@
         <div class="hero-brands"><span data-logo="unipoint"></span><span class="x">×</span><span data-logo="vertiv"></span></div>
         <h1>제품 선정은 빠르게,<br>경쟁력은 명확하게</h1>
         <p class="hero-desc">고객 요구사항에 적합한 Vertiv 제품을 선정하고, 경쟁사 제품과의 객관적인 비교 분석을 통해 기술적 강점과 영업 차별화 요소를 제시합니다.</p>
-        <div class="row"><a class="btn primary" href="#/input">요구사항 입력 시작</a><a class="btn glass" href="#/saved">저장된 비교</a><a class="btn glass" href="#/db">제품 DB</a></div>
+        <div class="row"><a class="btn primary" href="#/input">요구사항 입력 시작</a><a class="btn glass" href="#/saved">저장된 비교</a><a class="btn glass" href="#/db">제품 리스트</a></div>
       </div>
     </div>
     <div class="grid g4" style="margin-top:16px">
@@ -663,7 +663,7 @@
   // 목록을 다시 불러오지 않고 화면만 갱신
   function rerenderSavedOnly() { viewSaved.loading = true; rerender(); viewSaved.loading = false; }
 
-  /* ---------------------------- 제품 DB ---------------------------- */
+  /* --------------------------- 제품 리스트 --------------------------- */
   const dbFilter = { cat: 'all', vendor: 'all', q: '' };
   function specText(p) {
     switch (p.category) {
@@ -684,7 +684,7 @@
     const list = VSS.PRODUCTS.filter(p => (dbFilter.cat === 'all' || p.category === dbFilter.cat) && (dbFilter.vendor === 'all' || p.vendor === dbFilter.vendor) &&
       (!dbFilter.q || (p.name + p.desc + p.vendor).toLowerCase().includes(dbFilter.q.toLowerCase())));
     return `
-    <div class="row"><h1 style="margin:0">제품 DB</h1><span class="tag">${VSS.PRODUCTS.length}개 제품 · ${Object.keys(VSS.VENDORS).length}개 제조사</span></div>
+    <div class="row"><h1 style="margin:0">제품 리스트</h1><span class="tag">${VSS.PRODUCTS.length}개 제품 · ${Object.keys(VSS.VENDORS).length}개 제조사</span></div>
     <div class="notice warn" style="margin:12px 0">샘플 데이터입니다. 사양은 공개 자료 기반 근사치, 가격은 가상값(만원)이며 <code>js/data.js</code>에서 수정할 수 있습니다.</div>
     <div class="card"><div class="grid g3">
       <label class="f">제품군<select id="fCat"><option value="all">전체</option>${Object.entries(VSS.CATEGORIES).map(([k, c]) => `<option value="${k}" ${dbFilter.cat === k ? 'selected' : ''}>${c.label}</option>`).join('')}</select></label>

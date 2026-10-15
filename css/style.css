@@ -116,7 +116,7 @@ main.container { flex: 1 0 auto; }
 .btn {
   display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--surface);
   color: var(--text); padding: 8px 14px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer;
-  white-space: nowrap;
+  white-space: nowrap; text-decoration: none;
 }
 .btn:hover { background: var(--surface-2); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
