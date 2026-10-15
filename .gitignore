@@ -1,0 +1,10 @@
+# 비밀 키
+.env
+
+# 런타임 DB (저장된 비교) — 백업은 별도로
+data/*.db
+data/*.db-*
+
+node_modules/
+.DS_Store
+Thumbs.db

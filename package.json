@@ -1,0 +1,9 @@
+{
+  "name": "vertiv-solution-selector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vertiv 제품 선정 및 경쟁사 비교 지원 시스템 (프로토타입)",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
