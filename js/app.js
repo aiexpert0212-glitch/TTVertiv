@@ -53,6 +53,9 @@
   }
   function restore(rec) {
     const d = rec.data;
+    // DB(jsonb)는 객체 키 순서를 보존하지 않으므로 제품군 순서를 표준 순서로 복원
+    const cats = d.result.categories;
+    d.result.categories = Object.fromEntries(Object.keys(VSS.CATEGORIES).filter(c => cats[c]).map(c => [c, cats[c]]));
     for (const [cat, r] of Object.entries(d.result.categories)) r.defs = E.METRICS[cat];
     state.result = d.result;
     state.req = { ...E.defaultReq(), ...d.req };
@@ -564,7 +567,7 @@
             <td><a href="#" data-open="${r.id}"><b>${esc(r.name)}</b></a>${state.saved && state.saved.id === r.id ? ' <span class="tag accent">열려 있음</span>' : ''}</td>
             <td>${esc(r.customer || '-')}<div class="muted small">${esc(r.site || '')}</div></td>
             <td class="small">IT ${r.summary.itLoadKW}kW · ${esc(r.summary.redundancy)}<div class="muted">${E.PRIORITY_LABELS[r.summary.priority] || ''}</div></td>
-            <td class="small">${Object.entries(r.summary.categories).map(([cat, c]) => c ? `<div>${VSS.CATEGORIES[cat].icon} ${esc(c.product)} <span class="muted">(${c.score}점)</span></div>` : '').join('')}</td>
+            <td class="small">${Object.keys(VSS.CATEGORIES).map(cat => { const c = r.summary.categories[cat]; return c ? `<div>${VSS.CATEGORIES[cat].icon} ${esc(c.product)} <span class="muted">(${c.score}점)</span></div>` : ''; }).join('')}</td>
             <td class="small num">${new Date(r.updatedAt).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' })}</td>
             <td class="r" style="white-space:nowrap"><button class="btn sm" data-open="${r.id}">열기</button> <button class="btn sm" data-del="${r.id}">삭제</button></td>
           </tr>`).join('')}</tbody></table></div>
