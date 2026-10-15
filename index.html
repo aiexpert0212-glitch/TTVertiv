@@ -3,37 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Vertiv 제품 선정 지원</title>
+  <title>Vertiv 솔루션 셀렉터 · 유니포인트</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234657a5'/%3E%3Ctext x='15' y='25' font-family='Arial,sans-serif' font-size='22' font-weight='700' fill='%23fff' text-anchor='middle'%3Eu%3C/text%3E%3Ccircle cx='25' cy='8' r='3.6' fill='%23e87e00'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark">V</span>
-      <div>
-        <div class="brand-title">제품 선정 · 경쟁 비교</div>
-        <div class="brand-sub">Vertiv Solution Selector</div>
-      </div>
+    <div class="topbar-inner">
+      <a class="brand" href="#/" aria-label="홈으로">
+        <span class="brand-logo" data-logo="unipoint"></span>
+        <span class="brand-divider" aria-hidden="true"></span>
+        <span class="brand-text">
+          <span class="brand-title" id="brandProduct"></span>
+          <span class="brand-sub" id="brandTagline"></span>
+        </span>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="#/" data-text="홈">홈</a>
+        <a href="#/input" data-text="요구사항">요구사항</a>
+        <a href="#/results" data-text="추천 결과">추천 결과</a>
+        <a href="#/compare" data-text="경쟁사 비교">경쟁사 비교</a>
+        <a href="#/report" data-text="제안 리포트">제안 리포트</a>
+        <a href="#/saved" data-text="저장된 비교">저장된 비교</a>
+        <a href="#/db" data-text="제품 DB">제품 DB</a>
+        <a href="#/settings" class="nav-settings" title="설정" aria-label="설정">⚙</a>
+      </nav>
+      <span class="ai-badge" id="aiBadge" hidden></span>
     </div>
-    <nav class="nav" id="nav">
-      <a href="#/">홈</a>
-      <a href="#/input">요구사항</a>
-      <a href="#/results">추천 결과</a>
-      <a href="#/compare">경쟁사 비교</a>
-      <a href="#/report">제안 리포트</a>
-      <a href="#/saved">저장된 비교</a>
-      <a href="#/db">제품 DB</a>
-      <a href="#/settings">설정</a>
-    </nav>
-    <span class="ai-badge" id="aiBadge"></span>
   </header>
 
   <main id="app" class="container"></main>
 
   <footer class="footer">
-    프로토타입 · 제품 사양은 공개 자료 기반 근사치, 가격은 모두 가상값입니다. 실제 제안 전 최신 데이터시트와 견적으로 검증하세요.
+    <div class="footer-inner">
+      <span class="footer-brand"><span data-logo="unipoint"></span></span>
+      <span>© <span id="year"></span> <span id="footerCompany"></span>. 내부 업무용.</span>
+      <span class="spacer"></span>
+      <span class="muted">제품 사양은 공개 자료 기반 근사치, 가격은 가상값입니다. 실제 제안 전 최신 데이터시트·견적으로 검증하세요.</span>
+    </div>
   </footer>
 
+  <script src="js/brand.js"></script>
   <script src="js/data.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/ai.js"></script>

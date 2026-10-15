@@ -122,7 +122,8 @@ const MIME = {
 };
 
 function send(res, status, body, type = 'application/json; charset=utf-8') {
-  res.writeHead(status, { 'content-type': type });
+  // 업데이트 후 브라우저가 옛 화면을 보여주지 않도록 매번 재검증
+  res.writeHead(status, { 'content-type': type, 'cache-control': 'no-cache' });
   res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
 }
 
@@ -167,6 +168,11 @@ const BLOCKED_DIRS = [DATA_DIR, path.join(ROOT, 'supabase')];
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
   if (url.pathname === '/api/status') return send(res, 200, { serverKey: !!API_KEY, storage: repo.kind });
+  if (url.pathname === '/api/logos') {
+    // assets/ 에 실제로 있는 로고 파일만 알려 줌 (브라우저가 없는 파일을 요청하지 않도록)
+    const pick = key => ['svg', 'png', 'jpg'].map(ext => `assets/logo-${key}.${ext}`).find(f => fs.existsSync(path.join(ROOT, f))) || null;
+    return send(res, 200, { unipoint: pick('unipoint'), vertiv: pick('vertiv') });
+  }
   if (url.pathname === '/api/claude' && req.method === 'POST') return proxyClaude(req, res);
   const cm = url.pathname.match(/^\/api\/comparisons(?:\/(\d+))?\/?$/);
   if (cm) return comparisonsApi(req, res, cm[1] ? Number(cm[1]) : null);

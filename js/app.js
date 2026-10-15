@@ -24,6 +24,11 @@
     dirty: false,     // 저장 이후 변경 여부
   };
   state.req.categories = { ...E.defaultReq().categories, ...(state.req.categories || {}) };
+  // 전기요금·TCO 기간은 화면에서 입력하지 않고 기본값 고정 (예전에 저장된 값이 남아 있어도 기본값 사용)
+  state.req.electricityRate = E.defaultReq().electricityRate;
+  state.req.years = E.defaultReq().years;
+  // 고객사는 목록에서만 선택 — 목록에 없는 예전 입력값은 비움
+  if (!VSS.CUSTOMERS.includes(state.req.customer)) state.req.customer = '';
 
   function runSelection() {
     state.result = E.run(state.req);
@@ -76,7 +81,7 @@
     const s = state.saved;
     return `<div class="card no-print savebar">
       <div class="row">
-        ${s ? `<span class="tag accent">저장됨</span><b>${esc(s.name)}</b>` : '<span class="tag">저장 안 됨</span><span class="muted small">이 비교 결과를 저장해 두면 "저장된 비교"에서 다시 열 수 있습니다.</span>'}
+        ${s ? `<span class="tag accent">저장됨</span><b>${esc(s.name)}</b>` : '<span class="tag">저장 안 됨</span><span class="muted small one-line savebar-hint">저장하면 "저장된 비교"에서 다시 열 수 있습니다.</span>'}
         ${s && state.dirty ? '<span class="tag warn">변경사항 있음</span>' : ''}
         <span class="spacer"></span>
         <input id="saveName" style="width:280px" value="${esc(s ? s.name : defaultName())}" aria-label="저장 이름">
@@ -118,14 +123,27 @@
     document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#/' + name));
     $('#app').innerHTML = view();
     (view.after || (() => { }))();
+    VSS.mountLogos($('#app'));
+    addOverflowTitles();
     window.scrollTo(0, 0);
   }
   function rerender() { const y = window.scrollY; route(); window.scrollTo(0, y); }
+  // 한 줄로 잘린(…) 문구에는 마우스를 올리면 전체 문구가 보이도록 title 지정
+  function addOverflowTitles() {
+    requestAnimationFrame(() => {
+      document.querySelectorAll('#app td, #app .one-line, #app .ellipsis, #app .kv dd').forEach(el => {
+        if (!el.title && el.scrollWidth > el.clientWidth + 1) el.title = el.textContent.trim().replace(/\s+/g, ' ');
+      });
+    });
+  }
+  window.addEventListener('resize', () => { clearTimeout(addOverflowTitles.t); addOverflowTitles.t = setTimeout(addOverflowTitles, 200); });
   function go(h) { if (location.hash === h) route(); else location.hash = h; }
   function updateBadge() {
+    // AI를 쓰지 않는 기본 운영에서는 배지를 숨기고, AI 연결 시에만 표시
     const b = $('#aiBadge'), on = VSS.settings.aiEnabled();
-    b.className = 'ai-badge' + (on ? ' on' : '');
-    b.textContent = on ? 'AI 연결됨 · ' + VSS.settings.get().model : '데모 모드';
+    b.hidden = !on;
+    b.className = 'ai-badge on';
+    b.textContent = 'AI · ' + VSS.settings.get().model;
   }
 
   function needResult() {
@@ -142,26 +160,30 @@
   /* ------------------------------ 홈 ------------------------------ */
   function viewHome() {
     return `
-    <div class="card hero">
-      <h1>고객 요구사항 → 최적 Vertiv 제품 → 경쟁사 대비 강점</h1>
-      <p>RFP·이메일 텍스트를 붙여넣으면 AI가 요구사항을 정리하고, 용량 산정 규칙과 점수 모델로 최적의 Vertiv 구성을 추천합니다.
-      이어서 Schneider · Eaton · Huawei · Delta · Stulz 등 경쟁사 제품과 사양·효율·TCO를 비교해 영업 메시지까지 만들어 줍니다.</p>
-      <div class="row"><a class="btn primary" href="#/input">요구사항 입력 시작</a><a class="btn" href="#/db">제품 DB 보기</a></div>
+    <div class="card hero hero-photo">
+      <div class="hero-content">
+        <div class="hero-brands"><span data-logo="unipoint"></span><span class="x">×</span><span data-logo="vertiv"></span></div>
+        <h1>제품 선정은 빠르게,<br>경쟁력은 명확하게</h1>
+        <p class="hero-desc">고객 요구사항에 적합한 Vertiv 제품을 선정하고, 경쟁사 제품과의 객관적인 비교 분석을 통해 기술적 강점과 영업 차별화 요소를 제시합니다.</p>
+        <div class="row"><a class="btn primary" href="#/input">요구사항 입력 시작</a><a class="btn glass" href="#/saved">저장된 비교</a><a class="btn glass" href="#/db">제품 DB</a></div>
+      </div>
     </div>
     <div class="grid g4" style="margin-top:16px">
-      ${[['요구사항 분석', 'RFP 텍스트를 AI가 구조화된 사양으로 변환'], ['제품 선정', '용량·이중화·부하율 기준 자동 구성 및 점수화'],
+      ${[['요구사항 분석', 'RFP 텍스트에서 핵심 사양 자동 추출'], ['제품 선정', '용량·이중화·부하율 기준 자동 구성 및 점수화'],
         ['경쟁사 비교', '사양·효율·TCO·기능을 표와 차트로 비교'], ['강점 도출', '차별화 포인트·반론 대응·제안 요약 생성']]
-        .map((s, i) => `<div class="card step"><span class="step-n">${i + 1}</span><div><h4>${s[0]}</h4><div class="muted small">${s[1]}</div></div></div>`).join('')}
+        .map((s, i) => `<div class="card step"><span class="step-n">${i + 1}</span><div style="min-width:0"><h4 class="one-line">${s[0]}</h4><div class="muted small one-line">${s[1]}</div></div></div>`).join('')}
     </div>
     <div class="section-title"><h2>데모 시나리오</h2><span class="muted small">클릭하면 요구사항 텍스트가 채워집니다</span></div>
     <div class="grid g3">
-      ${VSS.SCENARIOS.map(s => `<div class="card scenario" data-sc="${s.id}"><h3>${esc(s.title)}</h3><div class="muted small">${esc(s.desc)}</div></div>`).join('')}
+      ${VSS.SCENARIOS.map(s => `<div class="card scenario" data-sc="${s.id}"><h3 class="one-line">${esc(s.title)}</h3><div class="muted small one-line">${esc(s.desc)}</div></div>`).join('')}
     </div>`;
   }
   viewHome.after = () => {
     document.querySelectorAll('[data-sc]').forEach(el => el.onclick = () => {
       const sc = VSS.SCENARIOS.find(s => s.id === el.dataset.sc);
-      state.rfpText = sc.rfp; state.extracted = null; state.saved = null; store.save('vss.rfp', sc.rfp); go('#/input');
+      state.rfpText = sc.rfp; state.extracted = null; state.saved = null; store.save('vss.rfp', sc.rfp);
+      if (sc.customer) { state.req.customer = sc.customer; store.save('vss.req', state.req); }
+      go('#/input');
     });
   };
 
@@ -195,11 +217,9 @@
       <div class="card">
         <h2>② 공통 조건</h2>
         <div class="grid g2">
-          ${field('고객사', 'customer', 'text')}${field('현장/프로젝트', 'site', 'text')}
+          ${sel('고객사', 'customer', [['', '고객사 선택'], ...VSS.CUSTOMERS.map(c => [c, c])])}${field('현장/프로젝트', 'site', 'text')}
           ${sel('선정 우선순위', 'priority', Object.entries(E.PRIORITY_LABELS))}
           ${field('증설 여유 (%)', 'growthPct')}
-          ${field('전기요금 (원/kWh)', 'electricityRate')}
-          ${field('TCO 산정 기간 (년)', 'years')}
         </div>
         <div style="margin-top:14px"><div class="f" style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">대상 제품군</div>
           ${Object.entries(VSS.CATEGORIES).map(([k, c]) => `<label class="check"><input type="checkbox" data-cat-check="${k}" ${r.categories[k] ? 'checked' : ''}> ${c.label}</label>`).join('')}
@@ -218,7 +238,7 @@
         ${field('최대 부하율 (%)', 'maxLoadingPct')}
       </div></fieldset>
       <fieldset class="card"><legend>❄ 정밀공조</legend><div class="grid g2">
-        ${field('열부하 (kW, 빈칸=자동)', 'heatLoadKW', 'number', `placeholder="자동 ${F.num(d.heatKW, 0)}"`)}
+        ${field('열부하 (kW)', 'heatLoadKW', 'number', `placeholder="자동 ${F.num(d.heatKW, 0)}" title="비워 두면 IT 부하로 자동 계산"`)}
         ${sel('설치 방식', 'coolingLayout', [['any', '무관'], ['room', '룸형'], ['inrow', '인로우']])}
         ${sel('냉각 방식', 'coolingMedium', [['any', '무관'], ['DX', 'DX(직팽)'], ['CW', '냉수(CW)']])}
         ${sel('이중화', 'coolingRedundancy', [['N', 'N'], ['N+1', 'N+1'], ['2N', '2N']])}
@@ -227,7 +247,7 @@
       </fieldset>
       <fieldset class="card"><legend>▦ 랙 · PDU</legend><div class="grid g2">
         ${field('랙 수량', 'rackCount')}
-        ${field('랙당 부하 (kW, 빈칸=자동)', 'rackKW', 'number', `placeholder="자동 ${F.num(d.rackKW, 1)}"`)}
+        ${field('랙당 부하 (kW)', 'rackKW', 'number', `placeholder="자동 ${F.num(d.rackKW, 1)}" title="비워 두면 IT 부하 ÷ 랙 수로 자동 계산"`)}
         ${sel('랙 높이', 'rackHeightU', [[42, '42U'], [47, '47U'], [48, '48U']])}
         ${sel('랙 폭', 'rackWidth', [[600, '600mm'], [750, '750mm'], [800, '800mm']])}
         ${sel('랙 깊이', 'rackDepth', [[1000, '1000mm'], [1100, '1100mm'], [1200, '1200mm']])}
@@ -264,6 +284,7 @@
     document.querySelectorAll('[data-sc]').forEach(el => el.onclick = () => {
       const sc = VSS.SCENARIOS.find(s => s.id === el.dataset.sc);
       $('#rfp').value = sc.rfp; state.rfpText = sc.rfp; state.saved = null; store.save('vss.rfp', sc.rfp);
+      if (sc.customer) { state.req.customer = sc.customer; store.save('vss.req', state.req); rerender(); }
     });
     $('#rfp').oninput = e => { state.rfpText = e.target.value; store.save('vss.rfp', state.rfpText); };
     $('#analyze').onclick = async () => {
@@ -293,6 +314,8 @@
     for (const [k, v] of Object.entries(f)) {
       if (v == null || k === 'summary') continue;
       if (k === 'monitoring') { r.categories.monitoring = !!v; continue; }
+      if (k === 'customer') { if (VSS.CUSTOMERS.includes(v)) r.customer = v; continue; } // 목록에 있는 고객사만
+      if (k === 'electricityRate' || k === 'years') continue;
       if (k in r) r[k] = v;
     }
     // 텍스트로 새 분석 시 이전 수동 자동계산값 초기화
@@ -334,14 +357,18 @@
             ${R.vertiv.map(c => `
               <div class="card alt ${c.id === sel.id ? 'selected' : ''}" data-pick="${c.id}" style="margin-top:10px;padding:12px">
                 <div class="row"><b>${esc(c.product.name)}</b><span class="spacer"></span><span class="num"><b>${c.score}</b>점</span></div>
-                <div class="muted small">${esc(c.desc)} · ${F.won(c.metrics.capex)}</div>
+                <div class="muted small one-line">${esc(c.desc)} · ${F.won(c.metrics.capex)}</div>
                 <div class="bar" style="margin-top:6px"><i style="width:${c.score}%"></i></div>
               </div>`).join('')}
           </div>
           <div class="card">
             <h3>선정 기준</h3>
-            <div class="small muted">우선순위 <b>${E.PRIORITY_LABELS[req.priority]}</b> · 증설 여유 ${req.growthPct}% · 전기요금 ${req.electricityRate}원/kWh · TCO ${req.years}년</div>
-            <div class="small muted">IT ${req.itLoadKW}kW · UPS ${req.redundancy} · 설계 열부하 ${F.num(d.heatKW, 0)}kW · 랙당 ${F.num(d.rackKW, 1)}kW</div>
+            <dl class="kv small">
+              <dt>우선순위</dt><dd>${E.PRIORITY_LABELS[req.priority]}</dd>
+              <dt>부하 / 이중화</dt><dd>IT ${req.itLoadKW}kW · UPS ${req.redundancy} · 증설 ${req.growthPct}%</dd>
+              <dt>설계값</dt><dd>열부하 ${F.num(d.heatKW, 0)}kW · 랙당 ${F.num(d.rackKW, 1)}kW</dd>
+              <dt>TCO 기준</dt><dd>${req.years}년 · ${req.electricityRate}원/kWh</dd>
+            </dl>
           </div>
         </div>
       </div>
@@ -525,8 +552,13 @@
       <button class="btn primary" onclick="window.print()">PDF로 저장 / 인쇄</button></div>
     <div style="height:14px" class="no-print"></div>${saveBar()}
     <div class="card report" style="margin-top:14px">
-      <div class="row"><div><div class="muted small">Vertiv 솔루션 제안 요약</div><h1 style="margin:4px 0">${esc(req.customer || '고객사')} ${esc(req.site || '')}</h1></div>
-        <span class="spacer"></span><div class="muted small">${new Date().toLocaleDateString('ko-KR')}</div></div>
+      <div class="report-head">
+        <span class="report-logo" data-logo="unipoint"></span>
+        <span class="spacer"></span>
+        <span class="report-logo partner" data-logo="vertiv"></span>
+      </div>
+      <div class="row" style="margin-top:18px"><div><div class="muted small">Vertiv 솔루션 제안 요약</div><h1 style="margin:4px 0">${esc(req.customer || '고객사')} ${esc(req.site || '')}</h1></div>
+        <span class="spacer"></span><div class="muted small" style="text-align:right">${new Date().toLocaleDateString('ko-KR')}<br>작성: ${esc(VSS.BRAND.company)}</div></div>
       <h2>고객 요구사항</h2>
       <dl class="kv">
         <dt>IT 부하</dt><dd>${req.itLoadKW} kW (증설 여유 ${req.growthPct}%)</dd>
@@ -665,8 +697,8 @@
         <td>${VSS.CATEGORIES[p.category].label}</td>
         <td><span class="vendor-dot" style="background:${vcolor(p.vendor)}"></span>${vshort(p.vendor)}</td>
         <td><b>${esc(p.name)}</b><div class="muted small">${esc(p.desc)}</div></td>
-        <td class="small">${esc(specText(p))}</td>
-        <td>${p.features.map(f => `<span class="tag">${VSS.FEATURES[f]}</span>`).join('')}</td>
+        <td class="small cell-clip">${esc(specText(p))}</td>
+        <td title="${esc(p.features.map(f => VSS.FEATURES[f]).join(', '))}">${p.features.slice(0, 2).map(f => `<span class="tag">${VSS.FEATURES[f]}</span>`).join('')}${p.features.length > 2 ? `<span class="tag accent">+${p.features.length - 2}</span>` : ''}</td>
         <td class="r small num">${priceText(p)}</td></tr>`).join('')}
       </tbody></table>${list.length ? '' : '<div class="empty">조건에 맞는 제품이 없습니다.</div>'}</div>`;
   }
@@ -692,7 +724,7 @@
         </div>
         <label class="check"><input type="checkbox" id="sUse" ${s.useAI ? 'checked' : ''}> AI 기능 사용 (끄면 규칙 기반 데모 모드)</label>
         <div class="grid" style="margin-top:12px">
-          ${VSS.serverKey ? '' : `<label class="f">브라우저용 API 키 (이 PC의 브라우저에만 저장)<input type="password" id="sKey" value="${esc(s.apiKey)}" placeholder="sk-ant-..."></label>`}
+          ${VSS.serverKey ? '' : `<label class="f" title="이 PC의 브라우저에만 저장됩니다">브라우저용 API 키<input type="password" id="sKey" value="${esc(s.apiKey)}" placeholder="sk-ant-..."></label>`}
           <label class="f">모델<select id="sModel">${opt(s.model, [['claude-opus-5-5', 'Claude Opus 5.5 (기본·최고 품질)'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5 (빠름·저비용)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (최저비용)']])}</select></label>
         </div>
         <div class="row" style="margin-top:14px"><span class="spacer"></span><button class="btn primary" id="sSave">저장</button></div>
@@ -719,6 +751,13 @@
   };
 
   /* ------------------------------ 시작 ------------------------------ */
+  const B = VSS.BRAND;
+  $('#brandProduct').textContent = B.product;
+  $('#brandTagline').textContent = B.tagline;
+  $('#footerCompany').textContent = `${B.company}(${B.companyEn})`;
+  $('#year').textContent = new Date().getFullYear();
+  VSS.mountLogos(document);
+
   window.addEventListener('hashchange', route);
   VSS.checkServer().then(() => { updateBadge(); if (/settings/.test(location.hash)) route(); });
   VSS.storage.detect();
