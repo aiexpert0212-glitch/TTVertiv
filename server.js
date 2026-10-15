@@ -190,4 +190,11 @@ http.createServer((req, res) => {
   console.log('저장소: ' + (repo.kind === 'supabase' ? `Supabase (${SUPABASE_URL})` : 'SQLite (data/vss.db)' +
     (SUPABASE_URL && !SUPABASE_KEY ? ' — SUPABASE_KEY가 없어 Supabase 대신 사용 중' : '')));
   console.log(API_KEY ? 'Claude API 키: 서버(.env)에서 로드됨' : 'Claude API: 미사용(데모 모드)');
+}).on('error', e => {
+  if (e.code === 'EADDRINUSE') {
+    console.error(`포트 ${PORT}이(가) 이미 사용 중입니다. 서버가 이미 실행 중이면 http://localhost:${PORT} 로 접속하세요.`);
+    console.error(`다른 포트로 실행하려면 .env 의 PORT 값을 바꾸세요 (예: PORT=3001).`);
+    process.exit(1);
+  }
+  throw e;
 });
