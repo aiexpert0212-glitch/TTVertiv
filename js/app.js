@@ -544,8 +544,9 @@
   const savedView = { list: null, q: '', checked: new Set(), error: null };
   function viewSaved() {
     const sv = savedView;
-    const where = VSS.storage.mode === 'server' ? '서버 DB(data/vss.db)에 저장 · 같은 서버를 쓰는 사람과 공유됩니다'
-      : '이 브라우저에만 저장됩니다 (node server.js 로 실행하면 DB에 저장)';
+    const where = VSS.storage.mode !== 'server' ? '이 브라우저에만 저장됩니다 (node server.js 로 실행하면 DB에 저장)'
+      : VSS.storage.kind === 'supabase' ? 'Supabase 클라우드 DB에 저장 · 같은 서버를 쓰는 사람과 공유됩니다'
+        : '서버 로컬 DB(data/vss.db)에 저장 · 같은 서버를 쓰는 사람과 공유됩니다';
     let body;
     if (sv.error) body = `<div class="notice warn">${esc(sv.error)}</div>`;
     else if (!sv.list) body = '<div class="empty"><span class="spinner"></span> 불러오는 중...</div>';

@@ -26,7 +26,12 @@ node server.js
 6. **제품 DB**: 샘플 제품 조회
 
 ### 저장 위치
-- `node server.js`로 실행하면 **SQLite DB(`data/vss.db`)**에 저장됩니다. 같은 서버에 접속한 사람끼리 목록을 공유하고, 백업은 이 파일을 복사하면 됩니다.
+- **Supabase**: `.env`에 `SUPABASE_URL`과 `SUPABASE_KEY`가 있으면 Supabase(PostgreSQL)에 저장합니다.
+  1. Supabase 대시보드 → **SQL Editor**에서 [`supabase/schema.sql`](supabase/schema.sql)을 실행해 테이블과 접근 정책을 만듭니다.
+  2. **Project Settings → API Keys**의 키를 `.env`의 `SUPABASE_KEY=` 뒤에 넣습니다. (예전 이름 `SUPABASE_SECRET_KEY`도 인식)
+  3. 서버를 재시작하면 로그에 `저장소: Supabase`가 표시됩니다.
+  - 현재는 **publishable 키 + anon 정책** 방식입니다. 프로젝트 주소와 키를 아는 사람은 누구나 저장된 비교를 읽고 삭제할 수 있으므로 **샘플 데이터 테스트용**입니다. 실제 가격·고객 정보를 넣기 전에는 secret 키(서버 전용)로 바꾸고 `schema.sql`의 anon 정책을 제거하거나, 로그인 기반 정책을 도입하세요.
+- **SQLite**: Supabase 설정이 없으면 서버 로컬 DB(`data/vss.db`)에 저장합니다. 백업은 이 파일을 복사하면 됩니다.
 - `index.html`을 직접 열면 브라우저(localStorage)에만 저장됩니다.
 - 저장 시 비교 결과 전체를 스냅샷으로 보관하므로, 이후 제품 DB가 바뀌어도 저장 당시 결과 그대로 다시 볼 수 있습니다.
 
@@ -39,7 +44,8 @@ node server.js
 | `js/storage.js` | 저장된 비교 저장소 (서버 DB / 브라우저 자동 선택) |
 | `js/app.js` | 화면 · 라우팅 |
 | `server.js` | 정적 파일 + 저장 비교 API(SQLite) + Claude API 프록시 (외부 패키지 없음) |
-| `data/vss.db` | 저장된 비교 DB (서버 첫 실행 시 자동 생성) |
+| `supabase/schema.sql` | Supabase 테이블·접근 정책 SQL (publishable 키 허용, 테스트용) |
+| `data/vss.db` | SQLite 사용 시 저장된 비교 DB (자동 생성) |
 
 ## 선정 로직 요약
 - **UPS**: 설계용량 = IT 부하 × (1+증설%) ÷ 최대부하율. 모듈형은 모듈 N+1, 단일기는 병렬 N+1, 2N은 2계통. 부하율에 따른 효율 저하를 반영하고, 손실전력은 냉방 부하(×1.3)까지 포함합니다.

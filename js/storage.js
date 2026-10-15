@@ -8,13 +8,17 @@ window.VSS = window.VSS || {};
 VSS.storage = (function () {
   const LS_KEY = 'vss.saved';
   let mode = null; // 'server' | 'local'
+  let kind = null; // 서버 저장소 종류: 'supabase' | 'sqlite'
   let detecting = null; // 동시 호출 시 같은 판별 결과를 공유
 
   function detect() {
     if (!detecting) detecting = (async () => {
       let m = 'local';
       if (/^https?:/.test(location.protocol)) {
-        try { const r = await fetch('/api/comparisons', { method: 'GET' }); if (r.ok) m = 'server'; } catch (e) { }
+        try {
+          const r = await fetch('/api/status');
+          if (r.ok) { const s = await r.json(); if (s.storage) { m = 'server'; kind = s.storage; } }
+        } catch (e) { }
       }
       return (mode = m);
     })();
@@ -42,6 +46,7 @@ VSS.storage = (function () {
   return {
     detect,
     get mode() { return mode; },
+    get kind() { return kind; },
     async list() {
       if ((await detect()) === 'server') return api('GET');
       return local.all().map(strip).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
